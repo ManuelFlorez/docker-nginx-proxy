@@ -31,7 +31,7 @@ http {
 
         location /validate_token {
             internal;  # Solo accesible desde dentro de Nginx
-            proxy_pass http://${BACKEND_AUTH}:8081/valid/token/;  # URL del endpoint de validación
+            proxy_pass http://${BACKEND_AUTH}/api/v1/valid/token;  # URL del endpoint de validación
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -74,7 +74,7 @@ http {
         # Redirige todas las rutas con raíz /api/v1/auth/ al servidor de destino
         location /api/v1/auth/ {
             limit_req zone=auth_limit burst=10 nodelay;
-            proxy_pass http://${BACKEND_AUTH}:8081;  # Cambia esto a la URL del servidor de destino para /api/v1/auth/
+            proxy_pass http://${BACKEND_AUTH}/api/v1/auth;  # Cambia esto a la URL del servidor de destino para /api/v1/auth/
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
