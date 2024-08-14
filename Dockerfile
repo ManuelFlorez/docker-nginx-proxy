@@ -12,6 +12,9 @@ COPY entrypoint.sh /entrypoint.sh
 #FROM nginx:1.27.0-alpine
 FROM openresty/openresty:alpine
 
+# Instala gettext en la imagen final para que envsubst esté disponible
+RUN apk --no-cache add gettext
+
 # Da permisos de ejecución al script
 RUN chmod +x /entrypoint.sh
 
