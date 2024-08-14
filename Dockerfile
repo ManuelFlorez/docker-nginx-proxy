@@ -8,12 +8,12 @@ RUN apk --no-cache add gettext
 COPY nginx.conf.template /etc/nginx/nginx.conf.template
 COPY entrypoint.sh /entrypoint.sh
 
-# Da permisos de ejecución al script
-RUN chmod +x /entrypoint.sh
-
 # Etapa 2: Configuración de la imagen final
 #FROM nginx:1.27.0-alpine
 FROM openresty/openresty:alpine
+
+# Da permisos de ejecución al script
+RUN chmod +x /entrypoint.sh
 
 # Copia el archivo de configuración y el script de entrada desde la etapa de construcción
 COPY --from=BUILDER /etc/nginx/nginx.conf.template /usr/local/openresty/nginx/conf/nginx.conf.template
