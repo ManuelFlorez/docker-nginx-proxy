@@ -61,8 +61,9 @@ http {
                 end
             }
 
+            limit_req zone=master_limit burst=20 nodelay;
+            
             if ($token_valid = 1) {
-                limit_req zone=master_limit burst=20 nodelay;
                 proxy_pass http://${BACKEND_MASTER};  # Cambia esto a la URL del servidor de destino
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
@@ -104,8 +105,9 @@ http {
                 end
             }
 
-            if ($token_valid = 1) {
-                limit_req zone=reports_limit burst=30 nodelay;
+            limit_req zone=reports_limit burst=30 nodelay;
+
+            if ($token_valid = 1) {                
                 proxy_pass http://${BACKEND_REPORTS};  # Cambia esto a la URL del servidor de destino para /reports/
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
