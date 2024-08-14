@@ -15,12 +15,12 @@ FROM openresty/openresty:alpine
 # Instala gettext en la imagen final para que envsubst esté disponible
 RUN apk --no-cache add gettext
 
-# Da permisos de ejecución al script
-RUN chmod +x /entrypoint.sh
-
 # Copia el archivo de configuración y el script de entrada desde la etapa de construcción
 COPY --from=BUILDER /etc/nginx/nginx.conf.template /usr/local/openresty/nginx/conf/nginx.conf.template
 COPY --from=BUILDER /entrypoint.sh /entrypoint.sh
+
+# Da permisos de ejecución al script
+RUN chmod +x /entrypoint.sh
 
 # Expon el puerto 80 para el tráfico HTTP
 EXPOSE 80
