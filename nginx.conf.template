@@ -3,6 +3,23 @@ events {
 }
 
 http {
+
+    upstream token_validator {
+        server ${BACKEND_AUTH}:80;  # URL del servicio de validación de tokens
+    }
+
+    upstream backend_master {
+        server ${BACKEND_MASTER}:80;
+    }
+
+    upstream backend_auth {
+        server ${BACKEND_AUTH}:80;
+    }
+
+    upstream backend_reports {
+        server ${BACKEND_REPORTS}:80;
+    }
+
     # Definir las zonas de limitación de peticiones
     limit_req_zone $binary_remote_addr zone=master_limit:10m rate=${MASTER_RATE};
     limit_req_zone $binary_remote_addr zone=auth_limit:10m rate=${AUTH_RATE};
@@ -12,19 +29,46 @@ http {
     server {
         listen 80;
 
+        location /validate_token {
+            internal;  # Solo accesible desde dentro de Nginx
+            proxy_pass ${BACKEND_AUTH}/valid/token/;  # URL del endpoint de validación
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Authorization $http_authorization;  # Pasar el header Authorization
+        }
+
         # Redirige todas las rutas con raíz /master/ al servidor de destino
         location /master/ {
             if ($http_authorization = "") {
                 return 401 "Authorization header missing";
             }
 
-            limit_req zone=master_limit burst=20 nodelay;
-            proxy_pass ${BACKEND_MASTER};  # Cambia esto a la URL del servidor de destino
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header Authorization $http_authorization;  # Pasar el header Authorization
+            # Verifica el token primero
+            set $auth_header $http_authorization;
+            set $token_valid 0;
+
+            # Hacer una solicitud al servicio de validación de tokens
+            access_by_lua_block {
+                local res = ngx.location.capture("/validate_token")
+                if res.status == 200 then
+                    ngx.var.token_valid = 1
+                else
+                    ngx.status = 401
+                    ngx.say("Unauthorized")
+                    ngx.exit(ngx.HTTP_UNAUTHORIZED)
+                end
+            }
+
+            if ($token_valid = 1) {
+                limit_req zone=master_limit burst=20 nodelay;
+                proxy_pass ${BACKEND_MASTER};  # Cambia esto a la URL del servidor de destino
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }   
         }
 
         # Redirige todas las rutas con raíz /api/v1/auth/ al servidor de destino
@@ -44,13 +88,30 @@ http {
                 return 401 "Authorization header missing";
             }
 
-            limit_req zone=reports_limit burst=30 nodelay;
-            proxy_pass ${BACKEND_REPORTS};  # Cambia esto a la URL del servidor de destino para /reports/
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header Authorization $http_authorization;  # Pasar el header Authorization
+            # Verifica el token primero
+            set $auth_header $http_authorization;
+            set $token_valid 0;
+
+            # Hacer una solicitud al servicio de validación de tokens
+            access_by_lua_block {
+                local res = ngx.location.capture("/validate_token")
+                if res.status == 200 then
+                    ngx.var.token_valid = 1
+                else
+                    ngx.status = 401
+                    ngx.say("Unauthorized")
+                    ngx.exit(ngx.HTTP_UNAUTHORIZED)
+                end
+            }
+
+            if ($token_valid = 1) {
+                limit_req zone=reports_limit burst=30 nodelay;
+                proxy_pass ${BACKEND_REPORTS};  # Cambia esto a la URL del servidor de destino para /reports/
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
         }
 
         # Opcional: Configuración para servir archivos estáticos o manejar otras rutas

@@ -12,10 +12,15 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Etapa 2: Configuración de la imagen final
-FROM nginx:1.7
+#FROM nginx:1.27.0-alpine
+FROM openresty/openresty:alpine
 
 # Copia el archivo de configuración y el script de entrada desde la etapa de construcción
-COPY --from=builder /etc/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
+#COPY --from=builder /etc/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
+#COPY --from=builder /entrypoint.sh /entrypoint.sh
+
+# Copia el archivo de configuración y el script de entrada desde la etapa de construcción
+COPY --from=builder /usr/local/openresty/nginx/conf/nginx.conf.template /usr/local/openresty/nginx/conf/nginx.conf.template
 COPY --from=builder /entrypoint.sh /entrypoint.sh
 
 # Expon el puerto 80 para el tráfico HTTP
