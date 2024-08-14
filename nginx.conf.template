@@ -3,6 +3,11 @@ events {
 }
 
 http {
+    # Definir las zonas de limitación de peticiones
+    limit_req_zone $binary_remote_addr zone=master_limit:10m rate=${MASTER_RATE};
+    limit_req_zone $binary_remote_addr zone=auth_limit:10m rate=${AUTH_RATE};
+    limit_req_zone $binary_remote_addr zone=reports_limit:10m rate=${REPORTS_RATE};
+
 
     upstream token_validator {
         server ${BACKEND_AUTH};  # URL del servicio de validación de tokens
@@ -19,11 +24,6 @@ http {
     upstream backend_reports {
         server ${BACKEND_REPORTS};
     }
-
-    # Definir las zonas de limitación de peticiones
-    limit_req_zone $binary_remote_addr zone=master_limit:10m rate=${MASTER_RATE};
-    limit_req_zone $binary_remote_addr zone=auth_limit:10m rate=${AUTH_RATE};
-    limit_req_zone $binary_remote_addr zone=reports_limit:10m rate=${REPORTS_RATE};
 
     # Configuración del servidor
     server {
