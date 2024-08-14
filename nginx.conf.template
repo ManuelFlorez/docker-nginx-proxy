@@ -52,9 +52,7 @@ http {
             # Hacer una solicitud al servicio de validación de tokens
             access_by_lua_block {
                 local res = ngx.location.capture("/validate_token")
-                if res.status == 200 then
-                    ngx.var.token_valid = 1
-                else
+                if res.status ~= 200 then
                     ngx.status = 401
                     ngx.say("Unauthorized")
                     ngx.exit(ngx.HTTP_UNAUTHORIZED)
@@ -62,14 +60,12 @@ http {
             }
 
             limit_req zone=master_limit burst=20 nodelay;
-            
-            if ($token_valid = 1) {
-                proxy_pass http://${BACKEND_MASTER};  # Cambia esto a la URL del servidor de destino
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-            }   
+            proxy_pass http://${BACKEND_MASTER};  # Cambia esto a la URL del servidor de destino
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+               
         }
 
         # Redirige todas las rutas con raíz /api/v1/auth/ al servidor de destino
@@ -96,9 +92,7 @@ http {
             # Hacer una solicitud al servicio de validación de tokens
             access_by_lua_block {
                 local res = ngx.location.capture("/validate_token")
-                if res.status == 200 then
-                    ngx.var.token_valid = 1
-                else
+                if res.status ~= 200 then
                     ngx.status = 401
                     ngx.say("Unauthorized")
                     ngx.exit(ngx.HTTP_UNAUTHORIZED)
@@ -106,14 +100,12 @@ http {
             }
 
             limit_req zone=reports_limit burst=30 nodelay;
-
-            if ($token_valid = 1) {                
-                proxy_pass http://${BACKEND_REPORTS};  # Cambia esto a la URL del servidor de destino para /reports/
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-            }
+            proxy_pass http://${BACKEND_REPORTS};  # Cambia esto a la URL del servidor de destino para /reports/
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            
         }
 
         # Opcional: Configuración para servir archivos estáticos o manejar otras rutas
