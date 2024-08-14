@@ -5,19 +5,19 @@ events {
 http {
 
     upstream token_validator {
-        server ${BACKEND_AUTH}:80;  # URL del servicio de validación de tokens
+        server ${BACKEND_AUTH};  # URL del servicio de validación de tokens
     }
 
     upstream backend_master {
-        server ${BACKEND_MASTER}:80;
+        server ${BACKEND_MASTER};
     }
 
     upstream backend_auth {
-        server ${BACKEND_AUTH}:80;
+        server ${BACKEND_AUTH};
     }
 
     upstream backend_reports {
-        server ${BACKEND_REPORTS}:80;
+        server ${BACKEND_REPORTS};
     }
 
     # Definir las zonas de limitación de peticiones
